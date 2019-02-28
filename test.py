@@ -1,7 +1,7 @@
 import numpy as np
 import nltk
 
-nltk.download()
+
 def load(filename):
     listeDoc = list()
     with open(filename, "r") as f:

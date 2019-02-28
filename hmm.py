@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 # allx: liste de séquences d'observations
 # allq: liste de séquences d'états
 # N: nb états
@@ -32,7 +33,7 @@ def viterbi(x,Pi,A,B):
     logB = np.log(B)
     logdelta = np.zeros((N,T))
     psi = np.zeros((N,T), dtype=int)
-    S = np.zeros(T)
+    S = np.zeros(T,dtype=int)
     logdelta[:,0] = np.log(Pi) + logB[:,x[0]]
     #forward
     for t in range(1,T):
@@ -60,6 +61,38 @@ def load(filename):
             doc.append((mots[0],mots[1]))
     return listeDoc
 
+def decodeSortie(indList,ind2cle):
+    new_list=[]
+    for i in indList:
+        new_list.append(ind2cle[i])
+    return new_list
+
+def evalHmm(Pi,A,B,allxT,allqT):
+    compteur=0
+    taille=0
+    confMat = np.zeros((len(A),len(A)))
+    for k in range(len(allxT)):
+        S, _ = viterbi(allxT[k],Pi,A,B)
+        for i in range(len(S)):
+            if(S[i] == allqT[k][i]):
+                compteur+=1
+            confMat[allqT[k][i]-1][S[i]-1]+=1
+
+            taille+=1
+    print(compteur)
+    confMat= [l/sum(l) for l in confMat]
+    return compteur/taille,confMat
+
+def affichage(A,posTag):
+    filename="test"
+    plt.figure()
+    plt.imshow(A, interpolation='nearest')
+    localLabs = posTag # liste des POS-TAG
+    plt.yticks(range(len(localLabs)),localLabs) # affichage sur l'image
+    plt.xticks(range(len(localLabs)),localLabs)
+    if filename != None:
+        plt.savefig(filename)
+
 
 filename = "data/wapiti/chtrain.txt" # a modifier
 filenameT = "data/wapiti/chtest.txt" # a modifier
@@ -84,13 +117,31 @@ cles = []
 cles = np.unique(np.array(cles))
 cles2ind = dict(zip(cles,range(len(cles))))
 
+ind2cle = dict(zip(range(len(cles)),cles))
+
 nCles = len(cles)
 
 print(nMots,nCles," in the dictionary")
 
 # mise en forme des données
 allx  = [[mots2ind[m] for m,c in d] for d in alldocs]
-allxT = [[mots2ind.setdefault(m,len(mots)) for m,c in d] for d in alldocsT]
+allxT = [[mots2ind.get(m,len(mots)) for m,c in d] for d in alldocsT]
 
 allq  = [[cles2ind[c] for m,c in d] for d in alldocs]
-allqT = [[cles2ind.setdefault(c,len(cles)) for m,c in d] for d in alldocsT]
+allqT = [[cles2ind.get(c,len(cles)) for m,c in d] for d in alldocsT]
+
+
+Pi,A,B = learnHMM(allx,allq,nCles,nMots)
+
+acc,confMat = evalHmm(Pi,A,B,allxT,allqT)
+
+plt.figure()
+plt.imshow(confMat, interpolation='nearest')
+localLabs = cles # liste des POS-TAG
+plt.yticks(range(len(localLabs)),localLabs) # affichage sur l'image
+plt.xticks(range(len(localLabs)),localLabs)
+plt.show()
+X= allxT[0]
+S , logP = viterbi(X,Pi,A,B)
+print(decodeSortie(S,ind2cle))
+affichage(A,cles)
