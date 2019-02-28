@@ -1,5 +1,9 @@
 import numpy as np
 import nltk
+from nltk.stem.porter import *
+stemmer = PorterStemmer()
+
+
 
 
 def load(filename):
@@ -20,7 +24,8 @@ def createDict(alldocs):
     dico = {}
     for doc in alldocs:
         for mot in doc:
-            dico[nltk.word_tokenize(mot[0])]=mot[1]
+            print(stemmer.stem(mot[0]))
+            dico[stemmer.stem(mot[0])]=mot[1]
     return dico
 
 def evalPerf(dico,docsTest):
@@ -33,7 +38,7 @@ def evalPerf(dico,docsTest):
     taille_totale=0
     for doc in docsTest:
         for mot in doc:
-            motNew=nltk.word_tokenize(mot[0])
+            motNew=stemmer.stem(mot[0])
             if(motNew not in dico):
                 if(argmax[0] == mot[1]):#renvoi la classe majoritaire
                     compteur+=1
@@ -46,16 +51,17 @@ def evalPerf(dico,docsTest):
             taille_totale+=1
     print(compteur)
     return compteur/taille_totale,motMalClasse
-# =============== chargement ============
-filename = "data/wapiti/chtrain.txt" # a modifier
-filenameT = "data/wapiti/chtest.txt" # a modifier
+if __name__ == '__main__' :
+    # =============== chargement ============
+    filename = "data/wapiti/chtrain.txt" # a modifier
+    filenameT = "data/wapiti/chtest.txt" # a modifier
 
-alldocs = load(filename)
-alldocsT = load(filenameT)
+    alldocs = load(filename)
+    alldocsT = load(filenameT)
 
-dicoTrain = createDict(alldocs)
+    dicoTrain = createDict(alldocs)
 
-acc,motMalClasse = evalPerf(dicoTrain,alldocsT)
-print(acc)
-print(len(alldocs)," docs read")
-print(len(alldocsT)," docs (T) read")
+    acc,motMalClasse = evalPerf(dicoTrain,alldocsT)
+    print(acc)
+    print(len(alldocs)," docs read")
+    print(len(alldocsT)," docs (T) read")

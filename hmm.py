@@ -94,54 +94,56 @@ def affichage(A,posTag):
         plt.savefig(filename)
 
 
-filename = "data/wapiti/chtrain.txt" # a modifier
-filenameT = "data/wapiti/chtest.txt" # a modifier
+if __name__ == '__main__' :
+    filename = "data/wapiti/chtrain.txt" # a modifier
+    filenameT = "data/wapiti/chtest.txt" # a modifier
 
-alldocs = load(filename)
-alldocsT = load(filenameT)
+    alldocs = load(filename)
+    alldocsT = load(filenameT)
 
-# alldocs etant issu du chargement des données
+    # alldocs etant issu du chargement des données
 
-buf = [[m for m,c in d ] for d in alldocs]
-mots = []
-[mots.extend(b) for b in buf]
-mots = np.unique(np.array(mots))
-nMots = len(mots)+1 # mot inconnu
+    buf = [[m for m,c in d ] for d in alldocs]
+    mots = []
+    [mots.extend(b) for b in buf]
+    mots = np.unique(np.array(mots))
+    nMots = len(mots)+1 # mot inconnu
 
-mots2ind = dict(zip(mots,range(len(mots))))
-mots2ind["UUUUUUUU"] = len(mots)
+    mots2ind = dict(zip(mots,range(len(mots))))
+    mots2ind["UUUUUUUU"] = len(mots)
 
-buf2 = [[c for m,c in d ] for d in alldocs]
-cles = []
-[cles.extend(b) for b in buf2]
-cles = np.unique(np.array(cles))
-cles2ind = dict(zip(cles,range(len(cles))))
+    buf2 = [[c for m,c in d ] for d in alldocs]
+    cles = []
+    [cles.extend(b) for b in buf2]
+    cles = np.unique(np.array(cles))
+    cles2ind = dict(zip(cles,range(len(cles))))
 
-ind2cle = dict(zip(range(len(cles)),cles))
+    ind2cle = dict(zip(range(len(cles)),cles))
 
-nCles = len(cles)
+    nCles = len(cles)
 
-print(nMots,nCles," in the dictionary")
+    print(nMots,nCles," in the dictionary")
 
-# mise en forme des données
-allx  = [[mots2ind[m] for m,c in d] for d in alldocs]
-allxT = [[mots2ind.get(m,len(mots)) for m,c in d] for d in alldocsT]
+    # mise en forme des données
+    allx  = [[mots2ind[m] for m,c in d] for d in alldocs]
+    allxT = [[mots2ind.get(m,len(mots)) for m,c in d] for d in alldocsT]
 
-allq  = [[cles2ind[c] for m,c in d] for d in alldocs]
-allqT = [[cles2ind.get(c,len(cles)) for m,c in d] for d in alldocsT]
+    allq  = [[cles2ind[c] for m,c in d] for d in alldocs]
+    allqT = [[cles2ind.get(c,len(cles)) for m,c in d] for d in alldocsT]
 
 
-Pi,A,B = learnHMM(allx,allq,nCles,nMots)
+    Pi,A,B = learnHMM(allx,allq,nCles,nMots)
 
-acc,confMat = evalHmm(Pi,A,B,allxT,allqT)
+    acc,confMat = evalHmm(Pi,A,B,allxT,allqT)
+    print(acc)
 
-plt.figure()
-plt.imshow(confMat, interpolation='nearest')
-localLabs = cles # liste des POS-TAG
-plt.yticks(range(len(localLabs)),localLabs) # affichage sur l'image
-plt.xticks(range(len(localLabs)),localLabs)
-plt.show()
-X= allxT[0]
-S , logP = viterbi(X,Pi,A,B)
-print(decodeSortie(S,ind2cle))
-affichage(A,cles)
+    plt.figure()
+    plt.imshow(confMat, interpolation='nearest')
+    localLabs = cles # liste des POS-TAG
+    plt.yticks(range(len(localLabs)),localLabs) # affichage sur l'image
+    plt.xticks(range(len(localLabs)),localLabs)
+    plt.show()
+    X= allxT[0]
+    S , logP = viterbi(X,Pi,A,B)
+    print(decodeSortie(S,ind2cle))
+    affichage(A,cles)
