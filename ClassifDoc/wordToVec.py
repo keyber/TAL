@@ -5,6 +5,7 @@ import numpy as np
 from sklearn.model_selection import StratifiedKFold
 
 
+#Attention il rest \n et . dans le texte
 CM = {'C':1, 'M':-1}
 CM_inv = {1:'C', -1:'M'}
 
@@ -52,7 +53,8 @@ def main():
     y_train = y_train[:n]
 
     vectorizer = CountVectorizer(stop_words=stop_words)
-    x_train = np.array(list(vectorizer.fit_transform(x_train)))
+    x_train = vectorizer.fit_transform(x_train)
+    print(x_train[:10])
     y_train=np.array(y_train)
     print("taille du dictionnaire:", len(vectorizer.get_feature_names()))
 
@@ -60,6 +62,7 @@ def main():
 
     skf = StratifiedKFold(n_splits=5)
     skf.get_n_splits(x_train, y_train)
+
 
     moyenne=0
     for train_index, test_index in skf.split(x_train, y_train):
