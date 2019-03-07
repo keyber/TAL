@@ -2,6 +2,8 @@ from sklearn.linear_model import Perceptron
 import nltk
 import numpy as np
 from nltk.stem.porter import *
+import numpy as np
+
 
 stemmer = PorterStemmer()
 
@@ -70,17 +72,17 @@ def main():
     print(len(x_train))
     x_train = x_train
     y_train = y_train
-    
+
     vocab = createDict(x_train)
     vocabDict = dict(zip(vocab, range(len(vocab))))
-    
+
     x_train_vectorized = encodage_data(x_train, vocabDict)
     clf = Perceptron(tol=1e-1, max_iter=100, shuffle=True)
     clf.fit(x_train_vectorized, y_train)
-    
+
     x_test_vectorized = encodage_data(load_test("corpus.tache1.test.utf8"), vocabDict)
     pred = clf.predict(x_test_vectorized)
-    
+
     pred = np.where(pred == -1, 'C', 'M')
     writeTofile(pred)
 
