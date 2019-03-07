@@ -58,9 +58,9 @@ def convertOutput(pred):
     new_pred=[]
     for p in pred:
         if(p==-1):
-            new_pred.append('M')#C
+            new_pred.append('C')
         else:
-            new_pred.append('C')#M
+            new_pred.append('M')
     return new_pred
 
 
@@ -82,9 +82,17 @@ labelsNeg = [-1 for _ in range(len(dataNeg))]
 data = dataPos+dataNeg
 labels = labelsPos+labelsNeg
 ##################################
+indiceShuffle = np.random.permutation(np.array([i for i in range(len(data))]))
 
+new_data=[]
+new_labels=[]
+for indice in indiceShuffle:
+    new_data.append(data[indice])
+    new_labels.append(labels[indice])
+data = new_data
+labels = new_labels
 
-vectorizer = CountVectorizer()
+vectorizer = CountVectorizer(max_df=0.9,min_df=0.2)
 vectorizer.fit(data)
 data = vectorizer.transform(data)
 
