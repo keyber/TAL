@@ -1,6 +1,9 @@
-from sklearn.linear_model import SGDClassifier
+from sklearn.linear_model import Perceptron
 import nltk
 from nltk.stem.porter import *
+import numpy as np
+
+
 stemmer = PorterStemmer()
 
 def load_data(fileName):
@@ -11,7 +14,10 @@ def load_data(fileName):
         for line in all_lines:
             tab = line.split(" ")
             lab = tab[0][1:-1].split(":")[2]
-            labels.append(lab)
+            if(lab == "C"):
+                labels.append(-1)
+            else:
+                labels.append(1)
             donnee = simplifieData(tab[1:])
             data.append(donnee)
         return data,labels
@@ -42,16 +48,19 @@ def createDict(data):
 def encodage_data(data,vocabDict):
     new_data=[]
     for d in data :
-        list=[]
+        list=np.zeros((len(vocabDict)))
         for mot in d:
-            list.append(vocabDict[mot])
+            list[vocabDict[mot]]+=1
         new_data.append(list)
     return new_data
 
 def writeTofile(tab):
     with open("result.txt","w") as res:
         for t in tab:
-            res.write(t+"\n")
+            if(t==1):
+                res.write("C\n")
+            else:
+                res.write("M\n")
 
 data,labels = load_data("corpus.tache1.learn.utf8")
 print(data[0])
@@ -60,9 +69,11 @@ vocab = createDict(data)
 vocabDict = dict(zip(vocab,range(len(vocab))))
 data_format = encodage_data(data,vocabDict)
 #print(data_format)
-clf = SGDClassifier(loss="perceptron", eta0=1e-4, learning_rate="constant", penalty=None,tol=1e-1,max_iter=10000,shuffle=True)
+clf =Perceptron(tol=1e-3, random_state=0)
+print(len(data_format))
+print(len(labels))
 clf.fit(data_format,labels)
-data_format_test = encodage_data(load_test("corpus.tache1.test.utf8"))
+data_format_test = encodage_data(load_test("corpus.tache1.test.utf8"),vocabDict)
 pred = clf.predict(data_format)
 print(pred)
 writeTofile(pred)
