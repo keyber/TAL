@@ -2,7 +2,8 @@ from sklearn.svm import SVC, LinearSVC
 from sklearn.feature_extraction.text import CountVectorizer
 from nltk.corpus import stopwords
 import numpy as np
-from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import StratifiedKFold
+
 
 CM = {'C':1, 'M':-1}
 CM_inv = {1:'C', -1:'M'}
@@ -51,13 +52,25 @@ def main():
     y_train = y_train[:n]
 
     vectorizer = CountVectorizer(stop_words=stop_words)
-    x_train = vectorizer.fit_transform(x_train)
+    x_train = np.array(list(vectorizer.fit_transform(x_train)))
+    y_train=np.array(y_train)
     print("taille du dictionnaire:", len(vectorizer.get_feature_names()))
 
     clf = SVC(kernel="linear", verbose=1, max_iter=1e3)
 
-    score = cross_val_score(clf,x_train,y_train,cv=5)
-    print(score.mean())
+    skf = StratifiedKFold(n_splits=5)
+    skf.get_n_splits(x_train, y_train)
+
+    moyenne=0
+    for train_index, test_index in skf.split(x_train, y_train):
+        print("TRAIN:", train_index, "TEST:", test_index)
+        X_trainTmp, X_testTmp = x_train[train_index], x_train[test_index]
+        y_trainTmp, y_testTmp = y_train[train_index], y_train[test_index]
+        print(len(X_trainTmp))
+        print(len(y_trainTmp))
+        clf.fit(X_trainTmp,y_trainTmp)
+        moyenne+=clf.score(X_testTmp,y_testTmp)
+    print(moyenne/5)
 
     x_test = load_test("corpus.tache1.test.utf8")
 
