@@ -1,10 +1,5 @@
-import numpy as np
-import nltk
 from nltk.stem.porter import *
 stemmer = PorterStemmer()
-
-
-
 
 def load(filename):
     listeDoc = list()
@@ -21,10 +16,11 @@ def load(filename):
     return listeDoc
 
 def createDict(alldocs):
+    """notre modèle est juste un dictionaire qui
+    stocke pour chaque mot une de ses classes rencontrées"""
     dico = {}
     for doc in alldocs:
         for mot in doc:
-            print(stemmer.stem(mot[0]))
             dico[stemmer.stem(mot[0])]=mot[1]
     return dico
 
@@ -51,10 +47,11 @@ def evalPerf(dico,docsTest):
             taille_totale+=1
     print(compteur)
     return compteur/taille_totale,motMalClasse
+
 if __name__ == '__main__' :
     # =============== chargement ============
-    filename = "data/wapiti/chtrain.txt" # a modifier
-    filenameT = "data/wapiti/chtest.txt" # a modifier
+    filename = "pos_tag/data/wapiti/chtrain.txt" # a modifier
+    filenameT = "pos_tag/data/wapiti/chtest.txt" # a modifier
 
     alldocs = load(filename)
     alldocsT = load(filenameT)
@@ -62,6 +59,6 @@ if __name__ == '__main__' :
     dicoTrain = createDict(alldocs)
 
     acc,motMalClasse = evalPerf(dicoTrain,alldocsT)
-    print(acc)
+    print("précision", acc)
     print(len(alldocs)," docs read")
     print(len(alldocsT)," docs (T) read")
