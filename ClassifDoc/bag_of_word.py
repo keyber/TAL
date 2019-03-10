@@ -5,6 +5,8 @@ from sklearn.model_selection import StratifiedKFold
 import pickle
 from sklearn.metrics import classification_report
 import matplotlib.pyplot as plt
+import random
+
 
 CM = {'C': 1, 'M': -1}
 CM_inv = {1: 'C', -1: 'M'}
@@ -98,7 +100,7 @@ def load_pickled_test():
         
     except FileNotFoundError:
         print("lecture test échouée")
-        x_test = Parser.load_test("corpus.tache1.test.utf8")
+        x_test = Parser.load_test("data/corpus.tache1.test.utf8")
         
         pickle_out = open("data/x_test", "wb")
         pickle.dump(x_test, pickle_out)
@@ -107,6 +109,20 @@ def load_pickled_test():
         print("test écrit")
     
     return x_test
+
+def plot_coefficients(classifier, feature_names, top_features=20):
+    coef = classifier.coef_.ravel()
+    ind = np.argsort(coef)
+    top_positive_coefficients = ind[-top_features:]
+    top_negative_coefficients = ind[:top_features]
+    top_coefficients = np.hstack([top_negative_coefficients, top_positive_coefficients])
+    # create plot
+    plt.figure(figsize=(15, 5))
+    colors = ["red" if c < 0 else "blue" for c in coef[top_coefficients]]
+    plt.bar(np.arange(2 * top_features), coef[top_coefficients], color=colors)
+    feature_names = np.array(feature_names)
+    plt.xticks(np.arange(1, 1 + 2 * top_features), feature_names[top_coefficients], rotation=60, ha="right")
+    plt.show()
 
 
 def cross_val(x, y, p_mod, p_vec):
@@ -157,7 +173,7 @@ def optimize_cross_val(x_train, y_train):
     
     max_iter = [1e5]
     class_weight = ["balanced"]
-    c = [2 ** (-3-i) for i in range(8)]
+    c = [2 ** (-3-i) for i in range(6)]
     
     # g = [2 ** (-i) for i in range(6)]
     # kernel = ["linear", "poly", "rbf"]
@@ -166,7 +182,7 @@ def optimize_cross_val(x_train, y_train):
     params_model_name = ["max_iter", "class_weight", "C"]
     
     
-    ngram_range = [(1,1)]#, (1,2)]#, (2,2)]
+    ngram_range = [(1,1), (1,2), (2,2)]
     max_df = [1.0]#[.01, .02, .04, .08, 0.16, 10.0]#np.linspace(.01, .2, 5)
     min_df = range(0, 1, 5)
     
@@ -198,16 +214,12 @@ def optimize_cross_val(x_train, y_train):
                 std_max = val_std
                 p_max_vec = p_vec
                 p_max_mod = p_mod
-                
-        print(p_max_vec)
-        print(p_max_mod)
     list_score = np.array(list_score)
     list_taille = np.array(list_taille)
     ax1 = plt.gca()
     ax1.errorbar(c, list_score[0], 2*list_score[1], capsize=5)
     #ax2 = ax1.twinx()
     #ax2.errorbar(c, list_taille[0], 2*list_taille[1], color='orange', capsize=5)
-    print(list_taille[1])
     plt.show()
     print("cross val, optimal trouvé :")
     print(p_max_mod, p_max_vec, val_max, std_max)
@@ -230,14 +242,19 @@ def main():
     # plt.hist(np.log2(list(c.values())),  bins=20)
     # plt.show()
     
-    n = len(x_train)
-    # n = 10000
+    indices = list(range(len(x_train)))
+    random.shuffle(indices)
+    x_train = x_train[indices]
+    y_train = y_train[indices]
+    
+    # n = len(x_train)
+    n = 10000
     
     print("taille train:", n)
     
     p_max_model, p_max_vectorizer, _, _ = optimize_cross_val(x_train[:n], y_train[:n])
-    
-    input("génération réponse ?")
+
+    #input("génération réponse ?")
     vectorizer = CountVectorizer(**p_max_vectorizer)
     vectorizer.fit(x_train)
     print("taille du dictionnaire:", len(vectorizer.get_feature_names()))
@@ -247,6 +264,8 @@ def main():
     clf = LinearSVC(**p_max_model)
     x_train_vec = vectorizer.transform(x_train)
     clf.fit(x_train_vec, y_train)
+    
+    plot_coefficients(clf, vectorizer.get_feature_names())
     
     x_test = load_pickled_test()
     
