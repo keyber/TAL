@@ -4,7 +4,12 @@ from sklearn.svm import LinearSVC
 from nltk.corpus import stopwords
 from nltk.stem.snowball import SnowballStemmer
 import numpy as np
-
+from sklearn.metrics import classification_report
+from sklearn import linear_model
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn import tree
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
 
 def getListOfFiles(dirName):
     # create a list of file and sub directories
@@ -28,7 +33,8 @@ def simplifie_phrase(p):
     stemmer = SnowballStemmer("english")
     stop_words = stopwords.words("english")
     phrase = p.lower().split(" ")
-    phraseDecomp = [stemmer.stem(s) for s in phrase if s not in stop_words]
+    #phraseDecomp = [stemmer.stem(s) for s in phrase if s not in stop_words]
+    phraseDecomp = [s for s in phrase]
     return ' '.join(word for word in phraseDecomp)
 
 
@@ -65,14 +71,15 @@ def convertOutput(pred):
 
 
 
-listFilePos = getListOfFiles("movies1000/pos/")
-listFileNeg = getListOfFiles("movies1000/neg/")
+listFilePos = getListOfFiles("AFDmovies/movies1000/pos/")
+listFileNeg = getListOfFiles("AFDmovies/movies1000/neg/")
 
 
 dataPos = loadData(listFilePos)
 print(len(dataPos))
 print("je viens de load les data pos")
 dataNeg = loadData(listFilePos)
+print(len(dataNeg))
 print("je viens de load les data neg")
 labelsPos = [1 for _ in range(len(dataPos))]
 labelsNeg = [-1 for _ in range(len(dataNeg))]
@@ -92,20 +99,53 @@ for indice in indiceShuffle:
 data = new_data
 labels = new_labels
 
-vectorizer = CountVectorizer(max_df=0.9,min_df=0.2)
+
+vectorizer = CountVectorizer(max_df=0.99,min_df=0.01)
 vectorizer.fit(data)
 data = vectorizer.transform(data)
 
+"""
+#On créer un ensemble de validation pour faire des test
+data = data[:-100]
+labels = labels[:-100]
+
+dataVal = data[-100:]
+labels_val = labels[-100:]
+"""
+
+#clf = LinearSVC(verbose=1,max_iter=1e8,tol=1e-1)
+#clf = linear_model.SGDClassifier(max_iter=1e4, tol=-1e3,verbose=1)
+clf = KNeighborsClassifier(n_neighbors=3)
+#clf = tree.DecisionTreeClassifier()
+#clf = LogisticRegression(random_state=0, solver='lbfgs',multi_class='multinomial',max_iter=1e6,tol=1e-18, verbose=1)
+"""
+clf = RandomForestClassifier(bootstrap=True, class_weight=None, criterion='gini',
+            max_depth=None, max_features='auto', max_leaf_nodes=None,
+            min_impurity_decrease=0.0, min_impurity_split=None,
+            min_samples_leaf=1, min_samples_split=2,
+            min_weight_fraction_leaf=0.0, n_estimators=100, n_jobs=None,
+            oob_score=False, random_state=None, verbose=0,
+            warm_start=False)
+"""
+print("je commence le fit")
+clf.fit(data,labels)
+
+"""
+##On test sur l'ensemble de validation
+y_pred_val = clf.predict(dataVal)
+rapport = classification_report(labels_val, y_pred_val, output_dict=True)
+print(rapport)
+"""
+
+
+#######On genere les labels sur le jeux de test et on ecrit dans un fichier############
 donnees_test = loadData_test("testSentiment.txt")
 donnees_test =  vectorizer.transform(donnees_test)
 print(donnees_test[0])
 
-clf = LinearSVC(verbose=1,max_iter=1e6)
-print("je commence le fit")
-clf.fit(data,labels)
-
-
 y_pred = clf.predict(donnees_test)
+print(y_pred)
+print(len(y_pred))
 y_pred = convertOutput(y_pred)
 
 writeTofile(y_pred)
